@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kontakta oss - Boozt Play</title>
+
+  <!-- ✅ Import Calistoga font -->
+  <link href="https://fonts.googleapis.com/css2?family=Calistoga&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ✅ Use Calistoga for key UI elements */
+    h1, h2, h3, h4, h5, h6,
+    .top-icons ul li a,
+    button {
+      font-family: 'Calistoga', cursive;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      background: url(background.png);
+      background-size: cover;
+      background-repeat: no-repeat;
+      color: #fff;
+    }
+
+    .navbar {
+      margin-left: -100px;
+      width: 100%;
+      height: 90px;
+      background: linear-gradient(90deg, #db0073, #ff7200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 40px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .logo {
+      height: 150px;
+      width: auto;
+      margin-top: 0px;
+      margin-left: 50px;
+      float: left;
+    }
+
+    .top-icons ul {
+      display: flex;
+      gap: 40px;
+      list-style: none;
+    }
+
+    .top-icons ul li a {
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .top-icons ul li a:hover {
+      color: #000;
+    }
+
+    .contact-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 40px;
+      padding: 60px 40px;
+      flex-wrap: wrap;
+    }
+
+    .contact-image {
+      flex: 1;
+      min-width: 280px;
+      text-align: center;
+    }
+
+    .contact-image img {
+      width: 100%;
+      max-width: 500px;
+      height: auto;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .contact-container {
+      flex: 1;
+      min-width: 300px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+
+    p {
+      font-size: 18px;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 16px;
+      color: white;
+      background-color: #ff6600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      font-family: 'Calistoga', cursive;
+    }
+
+    button:hover {
+      background-color: #e85c00;
+    }
+
+    #responseMessage {
+      margin-top: 20px;
+      font-weight: bold;
+      color: #00ffcc;
+    }
+
+    @media (max-width: 768px) {
+      .navbar {
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+      }
+
+      .logo {
+        height: 100px;
+        margin-left: 0;
+      }
+
+      .top-icons ul {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .contact-wrapper {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main">
+    <div class="navbar">
+      <div class="icon">
+        <a href="index.html">
+          <img src="logo.png" alt="Boozt Play Logo" class="logo">   
+        </a>
+      </div>  
+
+      <div class="top-icons">
+        <ul>
+          <li><a href="index.html">Hem</a></li>
+          <li><a href="aboutus.html">Om oss</a></li>
+          <li><a href="plan.html">Hitta Plan</a></li>
+          <li><a href="club.html">Starta din eget idrott förening</a></li>
+          <li><a href="Kontakta.html">Kontakta oss</a></li>
+        </ul>
+      </div>
+    </div> 
+
+    <section class="contact-wrapper">
+      <div class="contact-image">
+        <img src="contactimg.png" alt="Kontaktbild">
+      </div>
+
+      <div class="contact-container">
+        <h1>Kontakta oss</h1>
+        <p>Har du frågor eller förslag? Fyll i formuläret nedan.</p>
+
+        <form id="contactForm" action="https://formspree.io/f/mldldwbo" method="POST">
+          <label for="name">Namn</label>
+          <input type="text" id="name" name="name" required />
+
+          <label for="email">E-post</label>
+          <input type="email" id="email" name="email" required />
+
+          <label for="message">Meddelande</label>
+          <textarea id="message" name="message" rows="5" required></textarea>
+
+          <button type="submit">Skicka</button>
+        </form>
+
+        <div id="responseMessage"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    document.getElementById("contactForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const form = e.target;
+      const formData = new FormData(form);
+
+      const response = await fetch(form.action, {
+        method: form.method,
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      const responseMessage = document.getElementById("responseMessage");
+
+      if (response.ok) {
+        const name = document.getElementById("name").value;
+        responseMessage.innerText = `Tack för ditt meddelande, ${name}! Vi återkommer snart.`;
+        form.reset();
+      } else {
+        responseMessage.innerText = "Något gick fel. Försök igen senare.";
+      }
+    });
+  </script>
+</body>
+</html>

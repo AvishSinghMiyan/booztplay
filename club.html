@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Starta din fotbollsklubb</title>
+
+  <!-- ✅ Import Calistoga font -->
+  <link href="https://fonts.googleapis.com/css2?family=Calistoga&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ✅ Apply Calistoga font to key elements */
+    h1, h2, h3, h4, h5, h6,
+    .top-icons ul li a,
+    button {
+      font-family: 'Calistoga', cursive;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: url('background.png') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Navbar styling */
+    .navbar {
+      width: 100%;
+      height: 90px;
+      background: linear-gradient(90deg, #db0073, #ff7200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 40px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .logo {
+      height: 150px;
+      width: auto;
+      margin-top: 0;
+    }
+
+    .top-icons ul {
+      display: flex;
+      gap: 40px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .top-icons ul li a {
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .top-icons ul li a:hover {
+      color: #000;
+    }
+
+    /* Main content wrapper */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* Form styling */
+    .form-container {
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-top: 0;
+      font-family: 'Calistoga', cursive;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      margin-top: 1rem;
+      font-weight: bold;
+      color: #444;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      resize: vertical;
+    }
+
+    button {
+      margin-top: 1.5rem;
+      padding: 0.75rem;
+      width: 100%;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      font-family: 'Calistoga', cursive;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    @media (max-width: 600px) {
+      .top-icons ul {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .logo {
+        height: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <div class="navbar">
+    <div class="icon">
+      <a href="index.html">
+        <img src="logo.png" alt="Boozt Play Logo" class="logo">   
+      </a>
+    </div>  
+
+    <div class="top-icons">
+      <ul>
+        <li><a href="index.html">Hem</a></li>
+        <li><a href="aboutus.html">Om oss</a></li>
+        <li><a href="plan.html">Hitta Plan</a></li>
+        <li><a href="club.html">Starta din eget idrott förening</a></li>
+        <li><a href="Kontakta.html">Kontakta oss</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Form at the bottom -->
+  <div class="main-content">
+    <div class="form-container">
+      <h2>Starta din fotbollsklubb</h2>
+      <form action="https://formspree.io/f/manbnddj" method="POST">
+        <label for="namn">Vad heter du?</label>
+        <input type="text" id="namn" name="namn" required>
+
+        <label for="email">Vad är din e-postadress?</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="klubb">Vilken idrotts-förening vill du starta?</label>
+        <input type="text" id="klubb" name="klubb" required>
+
+        <label for="plats">Vart ska den idrotts-förening vara?</label>
+        <input type="text" id="plats" name="plats" required>
+
+        <label for="syfte">Vad är syftet med att starta din klubb?</label>
+        <textarea id="syfte" name="syfte" rows="4" required></textarea>
+
+        <button type="submit">Skicka</button>
+      </form>
+    </div>
+  </div>
+
+</body>
+</html>
