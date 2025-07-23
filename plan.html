@@ -6,6 +6,9 @@
   <title>Boozt Play Map</title>
   <link href="https://fonts.googleapis.com/css2?family=Calistoga&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <!-- Add Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
   <style>
     body { font-family: 'Calistoga', cursive; margin: 0; }
     .navbar {
@@ -30,6 +33,28 @@
     }
     .controls input, .controls button {
       padding: 5px 10px; font-size: 14px;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: white;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 500px;
+    }
+    .close {
+      float: right;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -58,8 +83,34 @@
 
 <div id="map"></div>
 
+<!-- Approval Modal -->
+<div id="approvalModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h2>Klubb Tillagd!</h2>
+    <p>Din förfrågan om att lägga till en ny klubb har skickats till administratören för godkännande.</p>
+    <p>Du kommer att få ett meddelande när din klubb har godkänts.</p>
+    <button onclick="closeModal()">OK</button>
+  </div>
+</div>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
+  // Initialize Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyCZnYVLnv2GgUvZwhwCisMau6x2feqtrUI",
+    authDomain: "booztplay-fecf3.firebaseapp.com",
+    projectId: "booztplay-fecf3",
+    storageBucket: "booztplay-fecf3.appspot.com",
+    messagingSenderId: "582387623597",
+    appId: "1:582387623597:web:51ad0b09ee1bc0f57d8824",
+    measurementId: "G-WZMGYSS1YD"
+  };
+  
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+  
   const map = L.map('map').setView([57.7089, 11.9746], 12);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -106,42 +157,49 @@
   };
 
   const markers = [];
+  let isAdmin = false;
 
-  const clubs = [
-    {
-      name: 'Göteborg Cricket Club',
-      sport: 'Cricket',
-      phone: '0701234567',
-      email: 'info@goteborgcricketclub.se',
-      lat: 57.785366,
-      lng: 12.038249
-    },
-    {
-      name: 'IFK Göteborg',
-      sport: 'Football',
-      phone: '0317037300',
-      email: 'info@ifkgoteborg.se',
-      lat: 57.706153,
-      lng: 11.980240
-    }
-  ];
-
-  function addMarker(club) {
-    const icon = icons[club.sport] || icons.Default;
-    const marker = L.marker([club.lat, club.lng], { icon }).addTo(map)
-      .bindPopup(`<b>${club.name}</b><br>Sport: ${club.sport}<br>📞 ${club.phone}<br>✉️ ${club.email}`);
-
-    marker.on("contextmenu", () => {
-      if (confirm(`Vill du ta bort ${club.name}?`)) {
-        map.removeLayer(marker);
+  // Load clubs from Firebase
+  function loadClubs() {
+    database.ref('clubs').on('value', (snapshot) => {
+      // Clear existing markers
+      markers.forEach(markerObj => {
+        map.removeLayer(markerObj.marker);
+      });
+      markers.length = 0;
+      
+      // Add approved clubs to the map
+      const clubsData = snapshot.val();
+      if (clubsData) {
+        Object.keys(clubsData).forEach(key => {
+          const club = clubsData[key];
+          if (club.approved) {
+            addMarker(club);
+          }
+        });
       }
     });
+  }
+
+  // Add a marker to the map
+  function addMarker(club) {
+    const icon = icons[club.sport] || icons.Default;
+    const marker = L.marker([club.lat, lng], { icon }).addTo(map)
+      .bindPopup(`<b>${club.name}</b><br>Sport: ${club.sport}<br>📞 ${club.phone}<br>✉️ ${club.email}`);
+
+    // Only allow admins to delete markers
+    if (isAdmin) {
+      marker.on("contextmenu", () => {
+        if (confirm(`Vill du ta bort ${club.name}?`)) {
+          database.ref('clubs/' + club.id).remove();
+        }
+      });
+    }
 
     markers.push({ ...club, marker });
   }
 
-  clubs.forEach(addMarker);
-
+  // Search for markers
   function searchMarker() {
     const query = document.getElementById('searchInput').value.toLowerCase();
     markers.forEach(obj => {
@@ -153,6 +211,7 @@
     });
   }
 
+  // Search for location
   function searchLocation() {
     const location = document.getElementById('locationInput').value;
     if (!location) return;
@@ -173,34 +232,102 @@
       });
   }
 
-  function enableAddPin() {
-    const accessCode = prompt("Ange tillgångskod:");
-    const validCode = "BOOZT2024";
+  // Show modal
+  function showModal() {
+    document.getElementById('approvalModal').style.display = 'block';
+  }
 
-    if (accessCode !== validCode) {
-      alert("Fel kod. Åtkomst nekad.");
+  // Close modal
+  function closeModal() {
+    document.getElementById('approvalModal').style.display = 'none';
+  }
+
+  // Enable adding a new pin
+  function enableAddPin() {
+    const accessCode = prompt("Ange tillgångskod (lämna tomt om du inte är administratör):");
+    const validCode = "BOOZT2024";
+    
+    if (accessCode === validCode) {
+      isAdmin = true;
+      alert("Du är nu inloggad som administratör. Du kan ta bort klubbar genom att högerklicka på dem.");
       return;
     }
-
+    
     alert("Klicka på kartan för att lägga till en ny klubb.");
     map.once('click', function (e) {
       const name = prompt("Klubbnamn:");
       const sport = prompt("Sport (ex. Football, Cricket):");
       const phone = prompt("Telefonnummer:");
       const email = prompt("Email:");
+      const contactPerson = prompt("Kontaktperson:");
 
-      if (name && sport && phone && email) {
+      if (name && sport && phone && email && contactPerson) {
         const newClub = {
-          name, sport, phone, email,
+          name,
+          sport,
+          phone,
+          email,
+          contactPerson,
           lat: e.latlng.lat,
-          lng: e.latlng.lng
+          lng: e.latlng.lng,
+          approved: false,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
         };
-        addMarker(newClub);
+
+        // Save to Firebase
+        const newClubRef = database.ref('clubs').push();
+        newClub.id = newClubRef.key;
+        newClubRef.set(newClub)
+          .then(() => {
+            // Send approval request via Formspree
+            sendApprovalRequest(newClub);
+            showModal();
+          })
+          .catch(error => {
+            console.error("Error saving club:", error);
+            alert("Det uppstod ett fel vid sparandet av klubben.");
+          });
       } else {
         alert("Alla fält måste fyllas i.");
       }
     });
   }
+
+  // Send approval request to Formspree
+  function sendApprovalRequest(club) {
+    const formData = new FormData();
+    formData.append('name', club.name);
+    formData.append('sport', club.sport);
+    formData.append('phone', club.phone);
+    formData.append('email', club.email);
+    formData.append('contactPerson', club.contactPerson);
+    formData.append('latitude', club.lat);
+    formData.append('longitude', club.lng);
+    formData.append('clubId', club.id);
+    formData.append('approvalLink', `https://yourwebsite.com/approve.html?id=${club.id}`);
+
+    fetch('https://formspree.io/f/mwpqlyrk', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      console.log('Approval request sent successfully');
+    })
+    .catch(error => {
+      console.error('Error sending approval request:', error);
+    });
+  }
+
+  // Initialize the map when the page loads
+  window.onload = function() {
+    loadClubs();
+  };
 </script>
 
 </body>
