@@ -1,334 +1,38 @@
-<!DOCTYPE html>
-<html lang="sv">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Boozt Play Map</title>
-  <link href="https://fonts.googleapis.com/css2?family=Calistoga&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <!-- Add Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
-  <style>
-    body { font-family: 'Calistoga', cursive; margin: 0; }
-    .navbar {
-      height: 90px;
-      background: linear-gradient(90deg, #db0073, #ff7200);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 40px;
-    }
-    .logo { height: 80px; }
-    .top-icons ul {
-      display: flex; gap: 30px; list-style: none;
-    }
-    .top-icons ul li a {
-      color: white; font-weight: bold; text-decoration: none;
-    }
-    #map { height: 85vh; width: 100%; }
-    .controls {
-      display: flex; justify-content: center; gap: 10px; padding: 10px; background: #f9f9f9;
-      flex-wrap: wrap;
-    }
-    .controls input, .controls button {
-      padding: 5px 10px; font-size: 14px;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-    }
-    .modal-content {
-      background-color: white;
-      margin: 15% auto;
-      padding: 20px;
-      border-radius: 8px;
-      width: 80%;
-      max-width: 500px;
-    }
-    .close {
-      float: right;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-
-<div class="navbar">
-  <img src="logo.png" alt="Boozt Play Logo" class="logo">
-  <div class="top-icons">
-    <ul>
-      <li><a href="index.html">Hem</a></li>
-      <li><a href="aboutus.html">Om oss</a></li>
-      <li><a href="plan.html">Hitta Plan</a></li>
-      <li><a href="club.html">Starta din eget idrott förening</a></li>
-      <li><a href="Kontakta.html">Kontakt</a></li>
-    </ul>
-  </div>
-</div>
-
-<div class="controls">
-  <input type="text" id="searchInput" placeholder="Sök sport (t.ex. Cricket)">
-  <button onclick="searchMarker()">Sök</button>
-  <input type="text" id="locationInput" placeholder="Sök plats (t.ex. Malmö)">
-  <button onclick="searchLocation()">Sök plats</button>
-  <button onclick="enableAddPin()">Lägg till klubb</button>
-</div>
-
-<div id="map"></div>
-
-<!-- Approval Modal -->
-<div id="approvalModal" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="closeModal()">&times;</span>
-    <h2>Klubb Tillagd!</h2>
-    <p>Din förfrågan om att lägga till en ny klubb har skickats till administratören för godkännande.</p>
-    <p>Du kommer att få ett meddelande när din klubb har godkänts.</p>
-    <button onclick="closeModal()">OK</button>
-  </div>
-</div>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script>
-  // Initialize Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyCZnYVLnv2GgUvZwhwCisMau6x2feqtrUI",
-    authDomain: "booztplay-fecf3.firebaseapp.com",
-    projectId: "booztplay-fecf3",
-    storageBucket: "booztplay-fecf3.appspot.com",
-    messagingSenderId: "582387623597",
-    appId: "1:582387623597:web:51ad0b09ee1bc0f57d8824",
-    measurementId: "G-WZMGYSS1YD"
-  };
-  
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
-  
-  const map = L.map('map').setView([57.7089, 11.9746], 12);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
-
-  const icons = {
-    Football: L.icon({
-      iconUrl: 'https://img.icons8.com/ios-glyphs/30/football2--v1.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
-    }),
-    Cricket: L.icon({
-      iconUrl: 'https://img.icons8.com/external-icongeek26-outline-icongeek26/64/external-Cricket-stadiums-and-games-icongeek26-outline-icongeek26.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
-    }),
-    Curling: L.icon({
-      iconUrl: 'https://img.icons8.com/ios-glyphs/30/curling-.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
-    }),
-    Rugby: L.icon({
-      iconUrl: 'https://img.icons8.com/ios-glyphs/30/rugby.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
-    }),
-    "American Football": L.icon({
-      iconUrl: 'https://img.icons8.com/ios-glyphs/30/american-football.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
-    }),
-    Default: L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
-    })
-  };
-
-  const markers = [];
-  let isAdmin = false;
-
-  // Load clubs from Firebase
-  function loadClubs() {
-    database.ref('clubs').on('value', (snapshot) => {
-      // Clear existing markers
-      markers.forEach(markerObj => {
-        map.removeLayer(markerObj.marker);
-      });
-      markers.length = 0;
-      
-      // Add approved clubs to the map
-      const clubsData = snapshot.val();
-      if (clubsData) {
-        Object.keys(clubsData).forEach(key => {
-          const club = clubsData[key];
-          if (club.approved) {
-            addMarker(club);
-          }
-        });
-      }
-    });
-  }
-
-  // Add a marker to the map
-  function addMarker(club) {
-    const icon = icons[club.sport] || icons.Default;
-    const marker = L.marker([club.lat, lng], { icon }).addTo(map)
-      .bindPopup(`<b>${club.name}</b><br>Sport: ${club.sport}<br>📞 ${club.phone}<br>✉️ ${club.email}`);
-
-    // Only allow admins to delete markers
-    if (isAdmin) {
-      marker.on("contextmenu", () => {
-        if (confirm(`Vill du ta bort ${club.name}?`)) {
-          database.ref('clubs/' + club.id).remove();
-        }
-      });
-    }
-
-    markers.push({ ...club, marker });
-  }
-
-  // Search for markers
-  function searchMarker() {
-    const query = document.getElementById('searchInput').value.toLowerCase();
-    markers.forEach(obj => {
-      const match = obj.name.toLowerCase().includes(query) || obj.sport.toLowerCase().includes(query);
-      if (match) {
-        map.setView(obj.marker.getLatLng(), 14);
-        obj.marker.openPopup();
-      }
-    });
-  }
-
-  // Search for location
-  function searchLocation() {
-    const location = document.getElementById('locationInput').value;
-    if (!location) return;
-
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.length > 0) {
-          const { lat, lon } = data[0];
-          map.setView([lat, lon], 13);
-        } else {
-          alert("Platsen hittades inte.");
-        }
-      })
-      .catch(error => {
-        console.error("Geocoding error:", error);
-        alert("Något gick fel vid sökning av plats.");
-      });
-  }
-
-  // Show modal
-  function showModal() {
-    document.getElementById('approvalModal').style.display = 'block';
-  }
-
-  // Close modal
-  function closeModal() {
-    document.getElementById('approvalModal').style.display = 'none';
-  }
-
-  // Enable adding a new pin
-  function enableAddPin() {
-    const accessCode = prompt("Ange tillgångskod (lämna tomt om du inte är administratör):");
-    const validCode = "BOOZT2024";
-    
-    if (accessCode === validCode) {
-      isAdmin = true;
-      alert("Du är nu inloggad som administratör. Du kan ta bort klubbar genom att högerklicka på dem.");
-      return;
-    }
-    
-    alert("Klicka på kartan för att lägga till en ny klubb.");
-    map.once('click', function (e) {
-      const name = prompt("Klubbnamn:");
-      const sport = prompt("Sport (ex. Football, Cricket):");
-      const phone = prompt("Telefonnummer:");
-      const email = prompt("Email:");
-      const contactPerson = prompt("Kontaktperson:");
-
-      if (name && sport && phone && email && contactPerson) {
-        const newClub = {
-          name,
-          sport,
-          phone,
-          email,
-          contactPerson,
-          lat: e.latlng.lat,
-          lng: e.latlng.lng,
-          approved: false,
-          timestamp: firebase.database.ServerValue.TIMESTAMP
-        };
-
-        // Save to Firebase
-        const newClubRef = database.ref('clubs').push();
-        newClub.id = newClubRef.key;
-        newClubRef.set(newClub)
-          .then(() => {
-            // Send approval request via Formspree
-            sendApprovalRequest(newClub);
-            showModal();
-          })
-          .catch(error => {
-            console.error("Error saving club:", error);
-            alert("Det uppstod ett fel vid sparandet av klubben.");
-          });
-      } else {
-        alert("Alla fält måste fyllas i.");
-      }
-    });
-  }
-
-  // Send approval request to Formspree
-  function sendApprovalRequest(club) {
-    const formData = new FormData();
-    formData.append('name', club.name);
-    formData.append('sport', club.sport);
-    formData.append('phone', club.phone);
-    formData.append('email', club.email);
-    formData.append('contactPerson', club.contactPerson);
-    formData.append('latitude', club.lat);
-    formData.append('longitude', club.lng);
-    formData.append('clubId', club.id);
-    formData.append('approvalLink', `https://yourwebsite.com/approve.html?id=${club.id}`);
-
-    fetch('https://formspree.io/f/mwpqlyrk', {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Accept': 'application/json'
-      }
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      console.log('Approval request sent successfully');
-    })
-    .catch(error => {
-      console.error('Error sending approval request:', error);
-    });
-  }
-
-  // Initialize the map when the page loads
-  window.onload = function() {
-    loadClubs();
-  };
-</script>
-
-</body>
-</html>
+const icons = {
+  Football: L.icon({
+    iconUrl: 'https://img.icons8.com/ios-glyphs/30/football2--v1.png',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30]
+  }),
+  Cricket: L.icon({
+    iconUrl: 'https://img.icons8.com/external-icongeek26-outline-icongeek26/64/external-Cricket-stadiums-and-games-icongeek26-outline-icongeek26.png',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30]
+  }),
+  Curling: L.icon({
+    iconUrl: 'https://img.icons8.com/ios-glyphs/30/curling-.png',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30]
+  }),
+  Rugby: L.icon({
+    iconUrl: 'https://img.icons8.com/ios-glyphs/30/rugby.png',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30]
+  }),
+  "American Football": L.icon({
+    iconUrl: 'https://img.icons8.com/ios-glyphs/30/american-football.png',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30]
+  }),
+  Default: L.icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30]
+  })
+};
