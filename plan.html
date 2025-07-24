@@ -65,15 +65,14 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-  // === FIREBASE CONFIG ===
+  // === FIXED FIREBASE CONFIG ===
   const firebaseConfig = {
     apiKey: "AIzaSyCZnYVLnv2GgUvZwhwCisMau6x2feqtrUI",
     authDomain: "booztplay-fecf3.firebaseapp.com",
     projectId: "booztplay-fecf3",
-    storageBucket: "booztplay-fecf3.firebasestorage.app",
+    storageBucket: "booztplay-fecf3.appspot.com",
     messagingSenderId: "582387623597",
     appId: "1:582387623597:web:51ad0b09ee1bc0f57d8824"
-    measurementId: "G-WZMGYSS1YD"
   };
 
   firebase.initializeApp(firebaseConfig);
@@ -123,7 +122,6 @@
     marker.on("contextmenu", () => {
       if (confirm(`Vill du ta bort ${club.name}?`)) {
         map.removeLayer(marker);
-        // Optional: remove from Firestore as well (not implemented here for safety)
       }
     });
 
@@ -192,7 +190,6 @@
         };
         addMarker(newClub);
 
-        // Save to Firestore
         db.collection("clubs").add(newClub)
           .then(() => console.log("Club saved to Firestore"))
           .catch(err => console.error("Error saving club:", err));
