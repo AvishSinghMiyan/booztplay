@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Boozt Play Map</title>
-  <link href="https://fonts.googleapis.com/css2?family=Calistoga&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Calistoga&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     body { font-family: 'Calistoga', cursive; margin: 0; }
@@ -36,22 +36,22 @@
 <body>
 
 <div class="navbar">
-  <img src="logo.png" alt="Boozt Play Logo" class="logo">
+  <img src="logo.png" alt="Boozt Play Logo" class="logo" />
   <div class="top-icons">
     <ul>
       <li><a href="index.html">Hem</a></li>
       <li><a href="aboutus.html">Om oss</a></li>
       <li><a href="plan.html">Hitta Plan</a></li>
-      <li><a href="club.html">Starta din eget idrott förening</a></li>
+      <li><a href="club.html">Lägg till din idrottsförening på kartan</a></li>
       <li><a href="Kontakta.html">Kontakt</a></li>
     </ul>
   </div>
 </div>
 
 <div class="controls">
-  <input type="text" id="searchInput" placeholder="Sök sport (t.ex. Cricket)">
+  <input type="text" id="searchInput" placeholder="Sök sport (t.ex. Cricket)" />
   <button onclick="searchMarker()">Sök</button>
-  <input type="text" id="locationInput" placeholder="Sök plats (t.ex. Malmö)">
+  <input type="text" id="locationInput" placeholder="Sök plats (t.ex. Malmö)" />
   <button onclick="searchLocation()">Sök plats</button>
   <button onclick="enableAddPin()">Lägg till klubb</button>
 </div>
@@ -59,148 +59,116 @@
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script>
-  const map = L.map('map').setView([57.7089, 11.9746], 12);
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-analytics-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCZnYVLnv2GgUvZwhwCisMau6x2feqtrUI",
+    authDomain: "booztplay-fecf3.firebaseapp.com",
+    projectId: "booztplay-fecf3",
+    storageBucket: "booztplay-fecf3.firebasestorage.app",
+    messagingSenderId: "582387623597",
+    appId: "1:582387623597:web:51ad0b09ee1bc0f57d8824",
+    measurementId: "G-WZMGYSS1YD"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  firebase.analytics();
+
+  const map = L.map('map').setView([57.7089, 11.9746], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
   const icons = {
-    Football: L.icon({
-      iconUrl: 'https://img.icons8.com/ios-glyphs/30/football2--v1.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
-    }),
-    Cricket: L.icon({
-      iconUrl: 'https://img.icons8.com/external-icongeek26-outline-icongeek26/64/external-Cricket-stadiums-and-games-icongeek26-outline-icongeek26.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
-    }),
-    Curling: L.icon({
-      iconUrl: 'https://img.icons8.com/ios-glyphs/30/curling-.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
-    }),
-    Rugby: L.icon({
-      iconUrl: 'https://img.icons8.com/ios-glyphs/30/rugby.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
-    }),
-    "American Football": L.icon({
-      iconUrl: 'https://img.icons8.com/ios-glyphs/30/american-football.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
-    }),
-    Default: L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
-    })
+    Football: L.icon({ iconUrl: 'https://img.icons8.com/ios-glyphs/30/football2--v1.png', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] }),
+    Cricket: L.icon({ iconUrl: 'https://img.icons8.com/external-icongeek26-outline-icongeek26/64/external-Cricket-stadiums-and-games-icongeek26-outline-icongeek26.png', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] }),
+    Curling: L.icon({ iconUrl: 'https://img.icons8.com/ios-glyphs/30/curling-.png', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] }),
+    Rugby: L.icon({ iconUrl: 'https://img.icons8.com/ios-glyphs/30/rugby.png', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] }),
+    "American Football": L.icon({ iconUrl: 'https://img.icons8.com/ios-glyphs/30/american-football.png', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] }),
+    Default: L.icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] })
   };
 
   const markers = [];
-
-  const clubs = [
-    {
-      name: 'Göteborg Cricket Club',
-      sport: 'Cricket',
-      phone: '0701234567',
-      email: 'info@goteborgcricketclub.se',
-      lat: 57.785366,
-      lng: 12.038249
-    },
-    {
-      name: 'IFK Göteborg',
-      sport: 'Football',
-      phone: '0317037300',
-      email: 'info@ifkgoteborg.se',
-      lat: 57.706153,
-      lng: 11.980240
-    }
-  ];
 
   function addMarker(club) {
     const icon = icons[club.sport] || icons.Default;
     const marker = L.marker([club.lat, club.lng], { icon }).addTo(map)
       .bindPopup(`<b>${club.name}</b><br>Sport: ${club.sport}<br>📞 ${club.phone}<br>✉️ ${club.email}`);
-
-    marker.on("contextmenu", () => {
-      if (confirm(`Vill du ta bort ${club.name}?`)) {
-        map.removeLayer(marker);
-      }
-    });
-
     markers.push({ ...club, marker });
   }
 
-  clubs.forEach(addMarker);
+  async function loadClubsFromFirestore() {
+    const snapshot = await db.collection("clubs").get();
+    snapshot.forEach(doc => addMarker(doc.data()));
+  }
+  loadClubsFromFirestore();
 
-  function searchMarker() {
+  window.searchMarker = function () {
     const query = document.getElementById('searchInput').value.toLowerCase();
     markers.forEach(obj => {
-      const match = obj.name.toLowerCase().includes(query) || obj.sport.toLowerCase().includes(query);
-      if (match) {
+      if (obj.name.toLowerCase().includes(query) || obj.sport.toLowerCase().includes(query)) {
         map.setView(obj.marker.getLatLng(), 14);
         obj.marker.openPopup();
       }
     });
-  }
+  };
 
-  function searchLocation() {
+  window.searchLocation = function () {
     const location = document.getElementById('locationInput').value;
     if (!location) return;
-
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`)
-      .then(response => response.json())
+      .then(res => res.json())
       .then(data => {
         if (data.length > 0) {
           const { lat, lon } = data[0];
-          map.setView([lat, lon], 13);
+          map.setView([parseFloat(lat), parseFloat(lon)], 13);
         } else {
           alert("Platsen hittades inte.");
         }
-      })
-      .catch(error => {
-        console.error("Geocoding error:", error);
-        alert("Något gick fel vid sökning av plats.");
       });
-  }
+  };
 
-  function enableAddPin() {
-    const accessCode = prompt("Ange tillgångskod:");
-    const validCode = "BOOZT2024";
+  window.enableAddPin = async function () {
+    const code = prompt("Ange tillgångskod:");
+    if (code !== "BOOZT2024") return alert("Fel kod.");
 
-    if (accessCode !== validCode) {
-      alert("Fel kod. Åtkomst nekad.");
-      return;
+    const name = prompt("Klubbnamn (ex: Malmö Tigers Cricket Club):");
+    const sport = prompt("Sport (ex: Cricket, Football):");
+    const phone = prompt("Telefonnummer (ex: 0701234567):");
+    const email = prompt("Email (ex: info@malmotigers.se):");
+    const address = prompt("Adress eller plats (ex: Malmö Stadion):");
+    const latStr = prompt("Latitud (valfritt – ex: 55.604981):");
+    const lngStr = prompt("Longitud (valfritt – ex: 13.003822):");
+
+    if (!name || !sport || !phone || !email || !address) return alert("Alla fält krävs (utom lat/lng).");
+
+    let lat, lng;
+
+    if (latStr && lngStr) {
+      lat = parseFloat(latStr);
+      lng = parseFloat(lngStr);
+      if (isNaN(lat) || isNaN(lng)) return alert("Latitud och longitud måste vara siffror.");
+    } else {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+      const data = await res.json();
+      if (data.length > 0) {
+        lat = parseFloat(data[0].lat);
+        lng = parseFloat(data[0].lon);
+      } else {
+        return alert("Kunde inte hitta platsen via adress. Ange lat/lng istället.");
+      }
     }
 
-    alert("Klicka på kartan för att lägga till en ny klubb.");
-    map.once('click', function (e) {
-      const name = prompt("Klubbnamn:");
-      const sport = prompt("Sport (ex. Football, Cricket):");
-      const phone = prompt("Telefonnummer:");
-      const email = prompt("Email:");
-
-      if (name && sport && phone && email) {
-        const newClub = {
-          name, sport, phone, email,
-          lat: e.latlng.lat,
-          lng: e.latlng.lng
-        };
-        addMarker(newClub);
-      } else {
-        alert("Alla fält måste fyllas i.");
-      }
-    });
-  }
+    const newClub = { name, sport, phone, email, lat, lng };
+    addMarker(newClub);
+    map.setView([lat, lng], 14);
+    await db.collection("clubs").add(newClub);
+    alert("Klubben har lagts till!");
+  };
 </script>
 
 </body>
