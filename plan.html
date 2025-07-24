@@ -7,7 +7,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Calistoga&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    body { font-family: 'Calistoga', cursive; margin: 0; }
+    body {
+      font-family: 'Calistoga', cursive;
+      margin: 0;
+    }
     .navbar {
       height: 90px;
       background: linear-gradient(90deg, #db0073, #ff7200);
@@ -16,20 +19,37 @@
       align-items: center;
       padding: 0 40px;
     }
-    .logo { height: 80px; }
+    .logo {
+      height: 80px;
+    }
     .top-icons ul {
-      display: flex; gap: 30px; list-style: none;
+      display: flex;
+      gap: 30px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
     }
     .top-icons ul li a {
-      color: white; font-weight: bold; text-decoration: none;
+      color: white;
+      font-weight: bold;
+      text-decoration: none;
     }
-    #map { height: 85vh; width: 100%; }
+    #map {
+      height: 85vh;
+      width: 100%;
+    }
     .controls {
-      display: flex; justify-content: center; gap: 10px; padding: 10px; background: #f9f9f9;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px;
+      background: #f9f9f9;
       flex-wrap: wrap;
     }
-    .controls input, .controls button {
-      padding: 5px 10px; font-size: 14px;
+    .controls input,
+    .controls button {
+      padding: 5px 10px;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -64,11 +84,12 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 
 <script>
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyCZnYVLnv2GgUvZwhwCisMau6x2feqtrUI",
     authDomain: "booztplay-fecf3.firebaseapp.com",
     projectId: "booztplay-fecf3",
-    storageBucket: "booztplay-fecf3.firebasestorage.app",
+    storageBucket: "booztplay-fecf3.appspot.com",
     messagingSenderId: "582387623597",
     appId: "1:582387623597:web:51ad0b09ee1bc0f57d8824",
     measurementId: "G-WZMGYSS1YD"
@@ -78,11 +99,13 @@
   const db = firebase.firestore();
   firebase.analytics();
 
+  // Init map
   const map = L.map('map').setView([57.7089, 11.9746], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
+  // Custom icons
   const icons = {
     Football: L.icon({ iconUrl: 'https://img.icons8.com/ios-glyphs/30/football2--v1.png', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] }),
     Cricket: L.icon({ iconUrl: 'https://img.icons8.com/external-icongeek26-outline-icongeek26/64/external-Cricket-stadiums-and-games-icongeek26-outline-icongeek26.png', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] }),
@@ -96,8 +119,23 @@
 
   function addMarker(club) {
     const icon = icons[club.sport] || icons.Default;
+    const addressQuery = encodeURIComponent(club.address || `${club.lat},${club.lng}`);
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${addressQuery}`;
+
+    const popupContent = `
+      <b>${club.name}</b><br>
+      Sport: ${club.sport}<br>
+      📍 Adress: ${club.address || "Ej angiven"}<br>
+      📞 ${club.phone}<br>
+      ✉️ ${club.email}<br>
+      <a href="${googleMapsUrl}" target="_blank" style="color:blue; text-decoration:underline;">
+        ➤ Öppna i Google Maps
+      </a>
+    `;
+
     const marker = L.marker([club.lat, club.lng], { icon }).addTo(map)
-      .bindPopup(`<b>${club.name}</b><br>Sport: ${club.sport}<br>📞 ${club.phone}<br>✉️ ${club.email}`);
+      .bindPopup(popupContent);
+
     markers.push({ ...club, marker });
   }
 
@@ -107,6 +145,7 @@
   }
   loadClubsFromFirestore();
 
+  // Search by name or sport
   window.searchMarker = function () {
     const query = document.getElementById('searchInput').value.toLowerCase();
     markers.forEach(obj => {
@@ -117,6 +156,7 @@
     });
   };
 
+  // Search by location
   window.searchLocation = function () {
     const location = document.getElementById('locationInput').value;
     if (!location) return;
@@ -132,6 +172,7 @@
       });
   };
 
+  // Add new club with access code
   window.enableAddPin = async function () {
     const code = prompt("Ange tillgångskod:");
     if (code !== "BOOZT2024") return alert("Fel kod.");
@@ -147,7 +188,6 @@
     if (!name || !sport || !phone || !email || !address) return alert("Alla fält krävs (utom lat/lng).");
 
     let lat, lng;
-
     if (latStr && lngStr) {
       lat = parseFloat(latStr);
       lng = parseFloat(lngStr);
@@ -163,7 +203,7 @@
       }
     }
 
-    const newClub = { name, sport, phone, email, lat, lng };
+    const newClub = { name, sport, phone, email, address, lat, lng };
     addMarker(newClub);
     map.setView([lat, lng], 14);
     await db.collection("clubs").add(newClub);
