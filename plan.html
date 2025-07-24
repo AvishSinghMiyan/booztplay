@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Boozt Play Map</title>
   <link href="https://fonts.googleapis.com/css2?family=Calistoga&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
   <style>
     body { font-family: 'Calistoga', cursive; margin: 0; }
     .navbar {
@@ -36,7 +41,7 @@
 <body>
 
 <div class="navbar">
-  <img src="logo.png" alt="Boozt Play Logo" class="logo">
+  <img src="logo.png" alt="Boozt Play Logo" class="logo" />
   <div class="top-icons">
     <ul>
       <li><a href="index.html">Hem</a></li>
@@ -49,9 +54,9 @@
 </div>
 
 <div class="controls">
-  <input type="text" id="searchInput" placeholder="Sök sport (t.ex. Cricket)">
+  <input type="text" id="searchInput" placeholder="Sök sport (t.ex. Cricket)" />
   <button onclick="searchMarker()">Sök</button>
-  <input type="text" id="locationInput" placeholder="Sök plats (t.ex. Malmö)">
+  <input type="text" id="locationInput" placeholder="Sök plats (t.ex. Malmö)" />
   <button onclick="searchLocation()">Sök plats</button>
   <button onclick="enableAddPin()">Lägg till klubb</button>
 </div>
@@ -60,6 +65,21 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
+  // === FIREBASE CONFIG ===
+  const firebaseConfig = {
+    apiKey: "AIzaSyCZnYVLnv2GgUvZwhwCisMau6x2feqtrUI",
+    authDomain: "booztplay-fecf3.firebaseapp.com",
+    projectId: "booztplay-fecf3",
+    storageBucket: "booztplay-fecf3.firebasestorage.app",
+    messagingSenderId: "582387623597",
+    appId: "1:582387623597:web:51ad0b09ee1bc0f57d8824"
+    measurementId: "G-WZMGYSS1YD"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // === MAP INIT ===
   const map = L.map('map').setView([57.7089, 11.9746], 12);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -69,62 +89,31 @@
   const icons = {
     Football: L.icon({
       iconUrl: 'https://img.icons8.com/ios-glyphs/30/football2--v1.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
+      iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30]
     }),
     Cricket: L.icon({
       iconUrl: 'https://img.icons8.com/external-icongeek26-outline-icongeek26/64/external-Cricket-stadiums-and-games-icongeek26-outline-icongeek26.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
+      iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30]
     }),
     Curling: L.icon({
       iconUrl: 'https://img.icons8.com/ios-glyphs/30/curling-.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
+      iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30]
     }),
     Rugby: L.icon({
       iconUrl: 'https://img.icons8.com/ios-glyphs/30/rugby.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
+      iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30]
     }),
     "American Football": L.icon({
       iconUrl: 'https://img.icons8.com/ios-glyphs/30/american-football.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
+      iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30]
     }),
     Default: L.icon({
       iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
-      popupAnchor: [0, -30]
+      iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30]
     })
   };
 
   const markers = [];
-
-  const clubs = [
-    {
-      name: 'Göteborg Cricket Club',
-      sport: 'Cricket',
-      phone: '0701234567',
-      email: 'info@goteborgcricketclub.se',
-      lat: 57.785366,
-      lng: 12.038249
-    },
-    {
-      name: 'IFK Göteborg',
-      sport: 'Football',
-      phone: '0317037300',
-      email: 'info@ifkgoteborg.se',
-      lat: 57.706153,
-      lng: 11.980240
-    }
-  ];
 
   function addMarker(club) {
     const icon = icons[club.sport] || icons.Default;
@@ -134,13 +123,19 @@
     marker.on("contextmenu", () => {
       if (confirm(`Vill du ta bort ${club.name}?`)) {
         map.removeLayer(marker);
+        // Optional: remove from Firestore as well (not implemented here for safety)
       }
     });
 
     markers.push({ ...club, marker });
   }
 
-  clubs.forEach(addMarker);
+  // Load existing clubs from Firestore
+  db.collection("clubs").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      addMarker(doc.data());
+    });
+  });
 
   function searchMarker() {
     const query = document.getElementById('searchInput').value.toLowerCase();
@@ -196,6 +191,11 @@
           lng: e.latlng.lng
         };
         addMarker(newClub);
+
+        // Save to Firestore
+        db.collection("clubs").add(newClub)
+          .then(() => console.log("Club saved to Firestore"))
+          .catch(err => console.error("Error saving club:", err));
       } else {
         alert("Alla fält måste fyllas i.");
       }
